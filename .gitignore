@@ -1,0 +1,9 @@
+# Build output
+/gitmap
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
