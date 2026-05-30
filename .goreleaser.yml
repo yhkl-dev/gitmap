@@ -28,6 +28,18 @@ archives:
       - LICENSE*
       - README*
 
+brews:
+  - name: gitmap
+    repository:
+      owner: yhkl-dev
+      name: homebrew-tap
+    directory: Formula
+    homepage: "https://github.com/yhkl-dev/gitmap"
+    description: "TUI for managing multiple git repositories"
+    license: "MIT"
+    test: |
+      system "#{bin}/gitmap --help"
+
 checksum:
   name_template: checksums.txt
 
