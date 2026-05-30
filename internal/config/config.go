@@ -10,6 +10,7 @@ import (
 // Config holds the user configuration for gitmap.
 type Config struct {
 	ScanPaths []string `yaml:"scan_paths"`
+	AutoFetch bool     `yaml:"auto_fetch"`
 }
 
 // Default returns a config with ~/projects as the default scan path.

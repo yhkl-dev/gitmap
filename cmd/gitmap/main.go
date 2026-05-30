@@ -3,125 +3,247 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/yhkl-dev/gitmap/internal/config"
 	gitpkg "github.com/yhkl-dev/gitmap/internal/git"
-	"github.com/yhkl-dev/gitmap/internal/scanner"
 )
 
 var (
-	selectedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("6")).Bold(true)
-	dirtyMark     = lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Render("●")
-	cleanMark     = lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("○")
-	titleStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("5"))
-	helpStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
+	green   = lipgloss.Color("2")
+	yellow  = lipgloss.Color("3")
+	grey    = lipgloss.Color("8")
+
+	muted        = lipgloss.NewStyle().Foreground(grey)
+	cursorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("15")).Bold(true)
+	dirtyTag     = lipgloss.NewStyle().Foreground(yellow).Render("[dirty]")
+	cleanDot     = lipgloss.NewStyle().Foreground(green).Render("○")
+	dirtyDot     = lipgloss.NewStyle().Foreground(yellow).Render("●")
+	bold         = lipgloss.NewStyle().Bold(true)
+	aheadStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("6")).Render
+	behindStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Render
+	stashStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Render
+	untrackStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render
 )
 
+const (
+	pageList   = iota
+	pageDetail
+)
+
+const (
+	sortDefault = iota
+	sortByName
+	sortByDirty
+)
+
+var sortNames = map[int]string{
+	sortDefault: "default",
+	sortByName:  "name",
+	sortByDirty: "dirty first",
+}
+
 type model struct {
-	repos    []gitpkg.RepoStatus
-	cursor   int
-	diff     string
-	showDiff bool
+	page int
+
+	allRepos     []gitpkg.RepoStatus
+	cursor       int
+	scrollOffset int
+	filter       string
+	filtering    bool
+	sortMode     int
+
+	detailRepo     *gitpkg.RepoStatus
+	detailDiff     string
+	detailLog      string
+	detailBranches string
+	detailStashes      string
+	detailScroll       int
+	detailStashResult  string
+	prsOutput          string
+	prsLoading         bool
+	showDiff           bool
+
+	branchSelect  bool
+	branchFilter  string
+
+	loading       bool
+	fetching      bool
+	fetchProgress string
+	pulling       bool
+	pullProgress  string
+	autoFetch     bool
+	initDone      bool
+	errorCount    int // -1 = scan failed, >=0 = per-repo errors
+
+	prefixCount int
+	lastKey     string
+
+	visualMode  bool
+	visualStart int
+
+	width    int
+	height   int
 	quitting bool
 }
 
-func (m model) Init() tea.Cmd { return nil }
+// ── message types ────────────────────────────────────────────────
+
+type prsLoadedMsg string
+
+type reposLoadedMsg struct {
+	repos  []gitpkg.RepoStatus
+	errors int // -1 = scan failed, >=0 = per-repo error count
+}
+
+type fetchDoneMsg struct{ single bool }
+type pullDoneMsg struct{ single bool }
+
+// ── bubble tea ──────────────────────────────────────────────────
+
+func (m model) Init() tea.Cmd {
+	return loadReposCmd()
+}
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
-			m.quitting = true
-			return m, tea.Quit
-		case "j", "down":
-			if m.cursor < len(m.repos)-1 {
-				m.cursor++
-			}
-		case "k", "up":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-		case "enter":
-			if len(m.repos) > 0 {
-				fmt.Println(m.repos[m.cursor].Path)
-			}
-			return m, tea.Quit
-		case "d":
-			m.showDiff = !m.showDiff
-			m.diff = ""
-			if m.showDiff && len(m.repos) > 0 {
-				m.diff = gitpkg.Diff(m.repos[m.cursor].Path)
-			}
-		case "r":
-			// Refresh repo list
-			m.repos = loadRepos()
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+
+	case reposLoadedMsg:
+		m.allRepos = msg.repos
+		m.errorCount = msg.errors
+		m.loading = false
+		m.cursor = clamp(m.cursor, 0, len(msg.repos)-1)
+		if m.autoFetch && !m.initDone {
+			m.initDone = true
+			m.fetching = true
+			m.fetchProgress = "auto-fetching..."
+			return m, batchFetchCmd(m.allRepos)
 		}
+
+	case prsLoadedMsg:
+		m.prsLoading = false
+		m.prsOutput = string(msg)
+
+	case fetchDoneMsg:
+		m.fetching = false
+		if msg.single {
+			m.fetchProgress = "fetched"
+		} else {
+			m.fetchProgress = "fetched all"
+		}
+		m.loading = true
+		return m, loadReposCmd()
+
+	case pullDoneMsg:
+		m.pulling = false
+		if msg.single {
+			m.pullProgress = "pulled"
+		} else {
+			m.pullProgress = "pulled all"
+		}
+		m.loading = true
+		return m, loadReposCmd()
+
+	case tea.KeyMsg:
+		return m.handleKey(msg)
 	}
 	return m, nil
+}
+
+func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if msg.String() == "ctrl+c" {
+		m.quitting = true
+		return m, tea.Quit
+	}
+
+	if m.page == pageDetail {
+		return m.handleDetailKey(msg)
+	}
+	return m.handleListKey(msg)
 }
 
 func (m model) View() string {
 	if m.quitting {
 		return ""
 	}
-
-	s := titleStyle.Render("gitmap") + helpStyle.Render(fmt.Sprintf("  %d repos", len(m.repos))) + "\n\n"
-
-	for i, r := range m.repos {
-		mark := cleanMark
-		if r.Dirty {
-			mark = dirtyMark
-		}
-
-		branch := ""
-		if r.Branch != "" {
-			branch = "  " + helpStyle.Render(r.Branch)
-		}
-
-		line := fmt.Sprintf("  %s  %s%s", mark, r.Name, branch)
-		if i == m.cursor {
-			line = selectedStyle.Render(line)
-		}
-		s += line + "\n"
+	if m.page == pageDetail {
+		return m.detailView()
 	}
-
-	s += "\n"
-	if m.showDiff && m.diff != "" {
-		s += helpStyle.Render("── diff ──────────────────────") + "\n"
-		s += m.diff + "\n\n"
-	}
-	s += helpStyle.Render("↑/↓ navigate  ⏎ cd  d diff  r refresh  q quit") + "\n"
-	return s
+	return m.listView()
 }
 
-func loadRepos() []gitpkg.RepoStatus {
+// ── helpers ─────────────────────────────────────────────────────
+
+func clamp(v, lo, hi int) int {
+	if hi < lo {
+		return lo
+	}
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
+func (m model) visualRange() (int, int) {
+	if m.cursor <= m.visualStart {
+		return m.cursor, m.visualStart
+	}
+	return m.visualStart, m.cursor
+}
+
+func loadConfig() *config.Config {
 	cfg := config.Default()
 	cfgPath := os.ExpandEnv("$HOME/.config/gitmap/config.yaml")
 	if _, err := os.Stat(cfgPath); err == nil {
-		c, cerr := config.Load(cfgPath)
-		if cerr == nil {
-			cfg = c
+		if c, err := config.Load(cfgPath); err == nil {
+			return c
 		}
 	}
+	return cfg
+}
 
-	repos, err := scanner.Scan(cfg.ScanPaths)
-	if err != nil {
-		return nil
-	}
+func openInTerm(path, cmd string) {
+	escaped := strings.ReplaceAll(path, "'", "'\\''")
+	script := fmt.Sprintf(
+		`tell application "iTerm2"
+			activate
+			try
+				tell current window
+					create tab with default profile
+				end tell
+			on error
+				create window with default profile
+			end try
+			tell current session of current tab of current window
+				write text "cd '%s' && %s"
+			end tell
+		end tell`, escaped, cmd)
+	exec.Command("osascript", "-e", script).Run()
+}
 
-	var statuses []gitpkg.RepoStatus
-	for _, r := range repos {
-		s, err := gitpkg.Status(r.Path)
-		if err != nil {
-			s = &gitpkg.RepoStatus{Path: r.Path, Name: r.Name}
-		}
-		statuses = append(statuses, *s)
+func openInITerm(path string) {
+	openInTerm(path, "clear")
+}
+
+func openClaude(path string) {
+	openInTerm(path, "claude --dangerously-skip-permissions")
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
 	}
-	return statuses
+	return b
 }
 
 func main() {
@@ -130,9 +252,12 @@ func main() {
 		return
 	}
 
-	repos := loadRepos()
+	cfg := loadConfig()
 
-	p := tea.NewProgram(model{repos: repos})
+	p := tea.NewProgram(
+		model{loading: true, autoFetch: cfg.AutoFetch},
+		tea.WithAltScreen(),
+	)
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)

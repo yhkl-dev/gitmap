@@ -40,6 +40,12 @@ tidy: ## Tidy module dependencies
 dev: ## Build, run tests, then run
 	$(GO) build $(GOFLAGS) -o $(BINARY) $(CMD) && $(GO) test ./... && ./$(BINARY)
 
+release: ## Run goreleaser to create a release (tag must exist)
+	goreleaser release --clean
+
+release-snapshot: ## Run goreleaser in snapshot mode (no publish)
+	goreleaser release --clean --snapshot
+
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'

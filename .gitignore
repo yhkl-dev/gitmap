@@ -1,5 +1,9 @@
 # Build output
 /gitmap
+dist/
+coverage.out
+coverage.html
+*.tar.gz
 
 # IDE
 .idea/

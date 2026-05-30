@@ -1,0 +1,55 @@
+project_name: gitmap
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: gitmap
+    main: ./cmd/gitmap
+    binary: gitmap
+    ldflags:
+      - -s -w
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - LICENSE*
+      - README*
+
+brews:
+  - name: gitmap
+    repository:
+      owner: yhkl-dev
+      name: homebrew-tap
+    directory: Formula
+    homepage: "https://github.com/yhkl-dev/gitmap"
+    description: "TUI for managing multiple git repositories"
+    license: "MIT"
+    test: |
+      system "#{bin}/gitmap --help"
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
