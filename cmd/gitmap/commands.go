@@ -1,14 +1,12 @@
 package main
 
 import (
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
 
 	"github.com/charmbracelet/bubbletea"
 
-	"github.com/yhkl-dev/gitmap/internal/config"
 	gitpkg "github.com/yhkl-dev/gitmap/internal/git"
 	"github.com/yhkl-dev/gitmap/internal/scanner"
 )
@@ -61,17 +59,9 @@ func batchPullCmd(repos []gitpkg.RepoStatus) tea.Cmd {
 	}
 }
 
-func loadReposCmd() tea.Cmd {
+func loadReposCmd(scanPaths []string) tea.Cmd {
 	return func() tea.Msg {
-		cfg := config.Default()
-		cfgPath := os.ExpandEnv("$HOME/.config/gitmap/config.yaml")
-		if _, err := os.Stat(cfgPath); err == nil {
-			if c, err := config.Load(cfgPath); err == nil {
-				cfg = c
-			}
-		}
-
-		repos, err := scanner.Scan(cfg.ScanPaths)
+		repos, err := scanner.Scan(scanPaths)
 		if err != nil {
 			return reposLoadedMsg{errors: -1}
 		}

@@ -94,6 +94,7 @@ func (m model) handleListKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	repos := m.filteredRepos()
+	m.cursor = clamp(m.cursor, 0, len(repos)-1)
 	prefix := m.prefixCount
 	m.prefixCount = 0
 	m.lastKey = ""
@@ -289,7 +290,7 @@ func (m model) handleListKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.cursor = 0
 			m.scrollOffset = 0
 			m.detailDiff = ""
-			return m, loadReposCmd()
+			return m, loadReposCmd(m.scanPaths)
 		}
 
 	case "/":
