@@ -76,9 +76,10 @@ type model struct {
 	fetchProgress string
 	pulling       bool
 	pullProgress  string
-	autoFetch     bool
-	initDone      bool
-	errorCount    int // -1 = scan failed, >=0 = per-repo errors
+	scanPaths  []string
+	autoFetch  bool
+	initDone   bool
+	errorCount int // -1 = scan failed, >=0 = per-repo errors
 
 	prefixCount int
 	lastKey     string
@@ -106,7 +107,7 @@ type pullDoneMsg struct{ single bool }
 // ── bubble tea ──────────────────────────────────────────────────
 
 func (m model) Init() tea.Cmd {
-	return loadReposCmd()
+	return loadReposCmd(m.scanPaths)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -139,7 +140,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.fetchProgress = "fetched all"
 		}
 		m.loading = true
-		return m, loadReposCmd()
+		return m, loadReposCmd(m.scanPaths)
 
 	case pullDoneMsg:
 		m.pulling = false
@@ -149,7 +150,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.pullProgress = "pulled all"
 		}
 		m.loading = true
-		return m, loadReposCmd()
+		return m, loadReposCmd(m.scanPaths)
 
 	case tea.KeyMsg:
 		return m.handleKey(msg)
@@ -212,7 +213,7 @@ func loadConfig() *config.Config {
 	return cfg
 }
 
-func openInTerm(path, cmd string) {
+func openInTerm(path, cmd string) error {
 	escaped := strings.ReplaceAll(path, "'", "'\\''")
 	script := fmt.Sprintf(
 		`tell application "iTerm2"
@@ -228,15 +229,19 @@ func openInTerm(path, cmd string) {
 				write text "cd '%s' && %s"
 			end tell
 		end tell`, escaped, cmd)
-	exec.Command("osascript", "-e", script).Run()
+	return exec.Command("osascript", "-e", script).Run()
 }
 
 func openInITerm(path string) {
-	openInTerm(path, "clear")
+	if err := openInTerm(path, "clear"); err != nil {
+		fmt.Fprintf(os.Stderr, "gitmap: failed to open iTerm: %v\n", err)
+	}
 }
 
 func openClaude(path string) {
-	openInTerm(path, "claude --dangerously-skip-permissions")
+	if err := openInTerm(path, "claude --dangerously-skip-permissions"); err != nil {
+		fmt.Fprintf(os.Stderr, "gitmap: failed to open Claude: %v\n", err)
+	}
 }
 
 func max(a, b int) int {
@@ -255,7 +260,7 @@ func main() {
 	cfg := loadConfig()
 
 	p := tea.NewProgram(
-		model{loading: true, autoFetch: cfg.AutoFetch},
+		model{loading: true, scanPaths: cfg.ScanPaths, autoFetch: cfg.AutoFetch},
 		tea.WithAltScreen(),
 	)
 	if _, err := p.Run(); err != nil {

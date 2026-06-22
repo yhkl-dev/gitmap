@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -26,7 +27,10 @@ func Default() *Config {
 func Load(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return Default(), nil
+		if errors.Is(err, os.ErrNotExist) {
+			return Default(), nil
+		}
+		return nil, err
 	}
 	cfg := &Config{}
 	if err := yaml.Unmarshal(data, cfg); err != nil {
