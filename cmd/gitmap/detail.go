@@ -167,8 +167,7 @@ func (m model) handleDetailKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case "o":
 		if m.detailRepo != nil {
-			fmt.Println(m.detailRepo.Path)
-			return m, tea.Quit
+			openInITerm(m.detailRepo.Path)
 		}
 
 	case "O":

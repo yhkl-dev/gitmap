@@ -212,8 +212,7 @@ func (m model) handleListKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "o":
 		m.visualMode = false
 		if len(repos) > 0 {
-			fmt.Println(repos[m.cursor].Path)
-			return m, tea.Quit
+			openInITerm(repos[m.cursor].Path)
 		}
 
 	case "O":
