@@ -2,99 +2,106 @@
 
 > Terminal-based multi-repo manager with vim keybindings — scan local repos, check status at a glance, and act fast.
 
-> 基于终端的 Vim 键位多仓库管理器 — 扫描本地仓库，一目了然查看状态，快速操作。
+[中文版](README.zh-CN.md)
 
 <img src="https://img.shields.io/badge/go-1.23%2B-00ADD8?logo=go" alt="Go 1.23+">
 
 ---
 
-## Quick Start · 快速开始
+## Quick Start
+
+### Homebrew (macOS)
 
 ```bash
-# Install · 安装
-go install github.com/yhkl-dev/gitmap/cmd/gitmap@latest
+brew install yhkl-dev/tap/gitmap
+```
 
-# Shell integration · Shell 集成 (add to ~/.bashrc / ~/.zshrc)
+### Go Install
+
+```bash
+go install github.com/yhkl-dev/gitmap/cmd/gitmap@latest
+```
+
+### Shell Integration & Launch
+
+```bash
+# Add to ~/.bashrc / ~/.zshrc
 source <(gitmap --shell-init)
 
-# Launch · 启动
+# Launch
 gmap
 ```
 
-`gmap` command: launches gitmap. Press `o` on a repo to `cd` into it, or `Enter` to select and then `q` to quit — your shell will `cd` there automatically.
-
-`gmap` 命令：启动 gitmap。在仓库上按 `o` 输出路径，或 `Enter` 选中后 `q` 退出 — shell 自动 `cd` 到该目录。
+`gmap` command: launches gitmap. Press `o` on a repo to print its path, or `Enter` to select and then `q` to quit — your shell will `cd` there automatically.
 
 ---
 
-## Keys · 键位
+## Keys
 
-### List View · 列表视图
+### List View
 
-| Key · 键位 | Action · 操作 |
+| Key | Action |
 |---|---|
-| `j` / `k` / `↓` / `↑` | Move cursor · 移动光标 |
-| `5j` / `10k` | Move N lines · 移动 N 行 (number prefix · 数字前缀) |
-| `ctrl+d` / `ctrl+u` | Half-page down/up · 半页上下 |
-| `ctrl+f` / `ctrl+b` | Full-page down/up · 整页上下 |
-| `gg` | Jump to top · 跳到顶部 |
-| `G` / `5G` | Jump to bottom / line N · 跳到底部 / 第 N 行 |
-| `v` | Visual mode — select repos · 可视模式 — 多选仓库 |
-| `f` / `p` | Fetch / Pull (visual: batch selected) · 拉取 (可视模式：批量) |
-| `F` / `P` | Fetch / Pull all repos · 拉取全部仓库 |
-| `⏎` | Detail view · 进入详情 |
-| `/` | Fuzzy search (repo name / branch) · 模糊搜索 (仓库名 / 分支) |
-| `n` / `N` | Next / Previous match · 下一个 / 上一个匹配 (active filter only) |
-| `s` | Cycle sort: default → name → dirty first · 切换排序 |
-| `o` | Print path and quit · 输出路径并退出 |
-| `O` | Open in iTerm2 tab · 在 iTerm2 新标签打开 (macOS) |
-| `c` | Open Claude Code in repo · 在仓库中启动 Claude Code |
-| `d` | Toggle diff preview (--stat) · 切换 diff 预览 |
-| `r` | Refresh repo list · 刷新仓库列表 |
-| `q` | Quit · 退出 |
+| `j` / `k` / `↓` / `↑` | Move cursor |
+| `5j` / `10k` | Move N lines (number prefix) |
+| `ctrl+d` / `ctrl+u` | Half-page down/up |
+| `ctrl+f` / `ctrl+b` | Full-page down/up |
+| `gg` | Jump to top |
+| `G` / `5G` | Jump to bottom / line N |
+| `v` | Visual mode — select repos |
+| `f` / `p` | Fetch / Pull (visual: batch selected) |
+| `F` / `P` | Fetch / Pull all repos |
+| `⏎` | Detail view |
+| `/` | Fuzzy search (repo name / branch) |
+| `n` / `N` | Next / Previous match (active filter only) |
+| `s` | Cycle sort: default → name → dirty first |
+| `o` | Print path and quit |
+| `O` | Open in iTerm2 tab (macOS) |
+| `c` | Open Claude Code in repo |
+| `d` | Toggle diff preview (--stat) |
+| `r` | Refresh repo list |
+| `q` | Quit |
 
-### Detail View · 详情视图
+### Detail View
 
-| Key · 键位 | Action · 操作 |
+| Key | Action |
 |---|---|
-| `j` / `k` | Scroll content · 滚动内容 |
-| `ctrl+d` / `ctrl+u` | Half-page scroll · 半页滚动 |
-| `ctrl+f` / `ctrl+b` | Full-page scroll · 整页滚动 |
-| `gg` / `G` | Scroll to top / bottom · 滚到顶部 / 底部 |
-| `a` | Stash apply · 应用最近 stash |
-| `A` | Stash pop · 弹出最近 stash |
-| `D` | Stash drop · 删除最近 stash |
-| `B` | Branch checkout (fuzzy search) · 分支切换 (模糊搜索) |
-| `b` | Open PR in browser · 浏览器打开 PR |
-| `d` | Toggle diff (full patch) · 切换 diff (完整补丁) |
-| `o` | Print path and quit · 输出路径并退出 |
-| `O` | Open in iTerm2 tab · 在 iTerm2 新标签打开 |
-| `r` | Refresh detail · 刷新详情 |
-| `esc` / `q` | Back to list · 返回列表 |
+| `j` / `k` | Scroll content |
+| `ctrl+d` / `ctrl+u` | Half-page scroll |
+| `ctrl+f` / `ctrl+b` | Full-page scroll |
+| `gg` / `G` | Scroll to top / bottom |
+| `a` | Stash apply |
+| `A` | Stash pop |
+| `D` | Stash drop |
+| `B` | Branch checkout (fuzzy search) |
+| `b` | Open PR in browser |
+| `d` | Toggle diff (full patch) |
+| `o` | Print path and quit |
+| `O` | Open in iTerm2 tab |
+| `r` | Refresh detail |
+| `esc` / `q` | Back to list |
 
 ---
 
-## Status Indicators · 状态指示
+## Status Indicators
 
-| Indicator · 指示 | Meaning · 含义 |
+| Indicator | Meaning |
 |---|---|
-| `●` (yellow) | Working tree dirty · 工作区有改动 |
-| `○` (green) | Working tree clean · 工作区干净 |
-| `⚡` (red) | Merge / rebase / cherry-pick conflict · 合并 / 变基冲突 |
-| `↑N` | N commits ahead of upstream · 领先远程 N 个提交 |
-| `↓N` | N commits behind upstream · 落后远程 N 个提交 |
-| `≡N` | N stashes · N 个储藏 |
-| `?N` | N untracked files · N 个未跟踪文件 |
-| `[dirty]` | Uncommitted changes · 未提交的修改 |
-| `[conflict]` | Conflict state · 冲突状态 |
+| `●` (yellow) | Working tree dirty |
+| `○` (green) | Working tree clean |
+| `⚡` (red) | Merge / rebase / cherry-pick conflict |
+| `↑N` | N commits ahead of upstream |
+| `↓N` | N commits behind upstream |
+| `≡N` | N stashes |
+| `?N` | N untracked files |
+| `[dirty]` | Uncommitted changes |
+| `[conflict]` | Conflict state |
 
 ---
 
-## Config · 配置
+## Config
 
 Create `~/.config/gitmap/config.yaml`:
-
-创建 `~/.config/gitmap/config.yaml`：
 
 ```yaml
 scan_paths:
@@ -102,27 +109,23 @@ scan_paths:
   - ~/work
   - /mnt/data/repos
 
-auto_fetch: true   # auto fetch all repos on startup · 启动时自动 fetch
+auto_fetch: true   # auto fetch all repos on startup
 ```
 
 Each path is scanned recursively for `.git` directories. Hidden folders (`.venv`, `.cache`, etc.) and package directories (`node_modules`, `vendor`) are skipped automatically.
 
-每个路径递归扫描 `.git` 目录。隐藏文件夹和包目录自动跳过。
-
 If no config file exists, `~/projects` is scanned by default.
-
-未配置时默认扫描 `~/projects`。
 
 ---
 
-## Development · 开发
+## Development
 
-### Prerequisites · 环境
+### Prerequisites
 
 - **Go 1.23+** — [download](https://go.dev/dl/)
 - Terminal with true color support (iTerm2, Kitty, WezTerm, Windows Terminal, etc.)
 
-### Clone & Build · 克隆构建
+### Clone & Build
 
 ```bash
 git clone git@github.com:yhkl-dev/gitmap.git
@@ -151,7 +154,7 @@ make release-snapshot  # Test release without publishing
 make help           # Show all targets
 ```
 
-### Project Structure · 项目结构
+### Project Structure
 
 ```
 gitmap/
@@ -180,9 +183,9 @@ gitmap/
 └── README.md
 ```
 
-### Tech Stack · 技术栈
+### Tech Stack
 
-| Layer 层 | Library 库 |
+| Layer | Library |
 |---|---|
 | TUI framework | [Bubble Tea](https://github.com/charmbracelet/bubbletea) |
 | Styling | [Lip Gloss](https://github.com/charmbracelet/lipgloss) |
