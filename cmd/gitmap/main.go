@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -31,8 +32,9 @@ var (
 )
 
 const (
-	pageList   = iota
+	pageList    = iota
 	pageDetail
+	pageHeatmap
 )
 
 const (
@@ -87,6 +89,15 @@ type model struct {
 	visualMode  bool
 	visualStart int
 
+	heatmapCommits    map[string]int
+	heatmapLines      map[string]int
+	heatmapLoading    bool
+	heatmapTotal      int
+	heatmapLinesTotal int
+	heatmapRepos      int
+
+	lastActivity time.Time
+
 	width    int
 	height   int
 	quitting bool
@@ -103,11 +114,18 @@ type reposLoadedMsg struct {
 
 type fetchDoneMsg struct{ single bool }
 type pullDoneMsg struct{ single bool }
+type idleTickMsg struct{}
+
+func idleTickCmd() tea.Cmd {
+	return tea.Tick(1*time.Second, func(t time.Time) tea.Msg {
+		return idleTickMsg{}
+	})
+}
 
 // ── bubble tea ──────────────────────────────────────────────────
 
 func (m model) Init() tea.Cmd {
-	return loadReposCmd(m.scanPaths)
+	return tea.Batch(loadReposCmd(m.scanPaths), idleTickCmd())
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -152,6 +170,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.loading = true
 		return m, loadReposCmd(m.scanPaths)
 
+	case heatmapLoadedMsg:
+		m.heatmapCommits = msg.commits
+		m.heatmapLines = msg.lines
+		m.heatmapTotal = msg.total
+		m.heatmapLinesTotal = msg.linesTotal
+		m.heatmapRepos = msg.repos
+		m.heatmapLoading = false
+
+	case idleTickMsg:
+		if m.page == pageList && time.Since(m.lastActivity) > 60*time.Second {
+			m.heatmapLoading = true
+			m.heatmapCommits = nil
+			m.heatmapLines = nil
+			m.page = pageHeatmap
+			return m, tea.Batch(loadHeatmapCmd(m.allRepos), idleTickCmd())
+		}
+		return m, idleTickCmd()
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -159,6 +195,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.lastActivity = time.Now()
+
 	if msg.String() == "ctrl+c" {
 		m.quitting = true
 		return m, tea.Quit
@@ -166,6 +204,9 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	if m.page == pageDetail {
 		return m.handleDetailKey(msg)
+	}
+	if m.page == pageHeatmap {
+		return m.handleHeatmapKey(msg)
 	}
 	return m.handleListKey(msg)
 }
@@ -176,6 +217,9 @@ func (m model) View() string {
 	}
 	if m.page == pageDetail {
 		return m.detailView()
+	}
+	if m.page == pageHeatmap {
+		return m.heatmapView()
 	}
 	return m.listView()
 }
@@ -260,7 +304,7 @@ func main() {
 	cfg := loadConfig()
 
 	p := tea.NewProgram(
-		model{loading: true, scanPaths: cfg.ScanPaths, autoFetch: cfg.AutoFetch},
+		model{loading: true, scanPaths: cfg.ScanPaths, autoFetch: cfg.AutoFetch, lastActivity: time.Now()},
 		tea.WithAltScreen(),
 	)
 	if _, err := p.Run(); err != nil {

@@ -210,6 +210,13 @@ func (m model) handleDetailKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.branchFilter = ""
 		return m, nil
 
+	case "h":
+		m.page = pageHeatmap
+		m.heatmapLoading = true
+		m.heatmapCommits = nil
+		m.heatmapLines = nil
+		return m, loadHeatmapCmd(m.allRepos)
+
 	case "r":
 		if m.detailRepo != nil {
 			m.detailDiff = gitpkg.DetailedDiff(m.detailRepo.Path)
@@ -398,7 +405,7 @@ func (m model) detailView() string {
 		footer = lipgloss.NewStyle().Foreground(yellow).Render("checkout: " + m.branchFilter + "_") +
 			muted.Render("  (esc cancel  enter confirm)")
 	} else {
-		footer = muted.Render("esc/q back  j/k scroll  ctrl+d/u page  gg/G top/bot  a apply  A pop  D drop  o cd  d diff  r refresh  b pr-browse  B checkout")
+		footer = muted.Render("esc/q back  j/k scroll  ctrl+d/u page  gg/G top/bot  a apply  A pop  D drop  o cd  d diff  h heatmap  r refresh  b pr-browse  B checkout")
 	}
 
 	return header + "\n" + sep + "\n\n" + scrolledBody + "\n" + footer + "\n"
