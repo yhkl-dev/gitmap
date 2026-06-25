@@ -10,11 +10,22 @@
 
 ## Quick Start
 
-```bash
-# Install
-go install github.com/yhkl-dev/gitmap/cmd/gitmap@latest
+### Homebrew (macOS)
 
-# Shell integration (add to ~/.bashrc / ~/.zshrc)
+```bash
+brew install yhkl-dev/tap/gitmap
+```
+
+### Go Install
+
+```bash
+go install github.com/yhkl-dev/gitmap/cmd/gitmap@latest
+```
+
+### Shell Integration & Launch
+
+```bash
+# Add to ~/.bashrc / ~/.zshrc
 source <(gitmap --shell-init)
 
 # Launch

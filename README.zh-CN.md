@@ -10,11 +10,22 @@
 
 ## 快速开始
 
-```bash
-# 安装
-go install github.com/yhkl-dev/gitmap/cmd/gitmap@latest
+### Homebrew (macOS)
 
-# Shell 集成 (添加到 ~/.bashrc / ~/.zshrc)
+```bash
+brew install yhkl-dev/tap/gitmap
+```
+
+### Go 安装
+
+```bash
+go install github.com/yhkl-dev/gitmap/cmd/gitmap@latest
+```
+
+### Shell 集成与启动
+
+```bash
+# 添加到 ~/.bashrc / ~/.zshrc
 source <(gitmap --shell-init)
 
 # 启动
