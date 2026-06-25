@@ -292,6 +292,14 @@ func (m model) handleListKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, loadReposCmd(m.scanPaths)
 		}
 
+	case "h":
+		m.visualMode = false
+		m.heatmapLoading = true
+		m.heatmapCommits = nil
+		m.heatmapLines = nil
+		m.page = pageHeatmap
+		return m, loadHeatmapCmd(m.allRepos)
+
 	case "/":
 		m.visualMode = false
 		m.filtering = true
@@ -408,8 +416,8 @@ func (m model) listView() string {
 	}
 
 	footerSep := ""
-	footer := muted.Render("j/k ↓↑  ctrl+d/u ½pg  ctrl+f/b pg  gg/G ↥↧  n/N next  5j prefix")
-	actionBar := muted.Render("/ search  ⏎ detail  s sort  o cd  c claude  f fetch  p pull  d diff  r refresh  v select  q quit")
+	footer := muted.Render("j/k ↓↑  ctrl+d/u ½pg  ctrl+f/b pg  gg/G ↥↧  n/N next  5j prefix  h heatmap")
+	actionBar := muted.Render("/ search  ⏎ detail  s sort  h heatmap  o cd  c claude  f fetch  p pull  d diff  r refresh  v select  q quit")
 
 	if m.filtering {
 		searchPrompt := lipgloss.NewStyle().Foreground(yellow).Render("/" + m.filter + "_")
