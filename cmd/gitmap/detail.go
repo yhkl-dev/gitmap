@@ -212,10 +212,13 @@ func (m model) handleDetailKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case "h":
 		m.page = pageHeatmap
-		m.heatmapLoading = true
-		m.heatmapCommits = nil
-		m.heatmapLines = nil
-		return m, loadHeatmapCmd(m.allRepos)
+		if !m.heatmapFresh() {
+			m.heatmapLoading = true
+			m.heatmapCommits = nil
+			m.heatmapLines = nil
+			return m, loadHeatmapCmd(m.allRepos)
+		}
+		return m, nil
 
 	case "r":
 		if m.detailRepo != nil {

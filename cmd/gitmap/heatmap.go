@@ -97,6 +97,14 @@ func loadHeatmapCmd(repos []gitpkg.RepoStatus) tea.Cmd {
 
 // ── key handling ─────────────────────────────────────────────────
 
+func (m model) heatmapFresh() bool {
+	if len(m.heatmapCommits) == 0 && len(m.heatmapLines) == 0 {
+		return false
+	}
+	now := time.Now()
+	return now.Year() == m.heatmapLoadedAt.Year() && now.YearDay() == m.heatmapLoadedAt.YearDay()
+}
+
 func (m model) handleHeatmapKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc", "q", "h":

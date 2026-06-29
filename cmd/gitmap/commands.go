@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbletea"
 
 	gitpkg "github.com/yhkl-dev/gitmap/internal/git"
+	"github.com/yhkl-dev/gitmap/internal/config"
 	"github.com/yhkl-dev/gitmap/internal/scanner"
 )
 
@@ -59,12 +60,23 @@ func batchPullCmd(repos []gitpkg.RepoStatus) tea.Cmd {
 	}
 }
 
-func loadReposCmd(scanPaths []string) tea.Cmd {
+func loadReposCmd(scanPaths []string, excludeRepos []string) tea.Cmd {
 	return func() tea.Msg {
 		repos, err := scanner.Scan(scanPaths)
 		if err != nil {
 			return reposLoadedMsg{errors: -1}
 		}
+
+		if len(excludeRepos) > 0 {
+			var filtered []scanner.Repo
+			for _, r := range repos {
+				if !config.MatchesAny(r.Name, excludeRepos) {
+					filtered = append(filtered, r)
+				}
+			}
+			repos = filtered
+		}
+
 		if len(repos) == 0 {
 			return reposLoadedMsg{}
 		}

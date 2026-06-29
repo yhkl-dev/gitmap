@@ -289,16 +289,19 @@ func (m model) handleListKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.cursor = 0
 			m.scrollOffset = 0
 			m.detailDiff = ""
-			return m, loadReposCmd(m.scanPaths)
+			return m, loadReposCmd(m.scanPaths, m.excludeRepos)
 		}
 
 	case "h":
 		m.visualMode = false
-		m.heatmapLoading = true
-		m.heatmapCommits = nil
-		m.heatmapLines = nil
 		m.page = pageHeatmap
-		return m, loadHeatmapCmd(m.allRepos)
+		if !m.heatmapFresh() {
+			m.heatmapLoading = true
+			m.heatmapCommits = nil
+			m.heatmapLines = nil
+			return m, loadHeatmapCmd(m.allRepos)
+		}
+		return m, nil
 
 	case "/":
 		m.visualMode = false

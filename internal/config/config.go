@@ -10,8 +10,9 @@ import (
 
 // Config holds the user configuration for gitmap.
 type Config struct {
-	ScanPaths []string `yaml:"scan_paths"`
-	AutoFetch bool     `yaml:"auto_fetch"`
+	ScanPaths    []string `yaml:"scan_paths"`
+	AutoFetch    bool     `yaml:"auto_fetch"`
+	ExcludeRepos []string `yaml:"exclude_repos"`
 }
 
 // Default returns a config with ~/projects as the default scan path.
@@ -43,6 +44,21 @@ func Load(path string) (*Config, error) {
 		return Default(), nil
 	}
 	return cfg, nil
+}
+
+// MatchesAny reports whether name matches any of the given filepath.Match patterns.
+func MatchesAny(name string, patterns []string) bool {
+	for _, pat := range patterns {
+		if ok, _ := filepath.Match(pat, name); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// IsExcluded returns true if name matches any pattern in the exclude list.
+func (c *Config) IsExcluded(name string) bool {
+	return MatchesAny(name, c.ExcludeRepos)
 }
 
 // expandTilde replaces a leading ~ with the user's home directory.
