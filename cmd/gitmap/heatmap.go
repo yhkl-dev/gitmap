@@ -44,7 +44,7 @@ type heatmapLoadedMsg struct {
 
 // ── command ──────────────────────────────────────────────────────
 
-func loadHeatmapCmd(repos []gitpkg.RepoStatus, author string) tea.Cmd {
+func loadHeatmapCmd(repos []gitpkg.RepoStatus, authors []string) tea.Cmd {
 	return func() tea.Msg {
 		const maxConcurrent = 8
 		sem := make(chan struct{}, maxConcurrent)
@@ -61,7 +61,7 @@ func loadHeatmapCmd(repos []gitpkg.RepoStatus, author string) tea.Cmd {
 				sem <- struct{}{}
 				defer func() { <-sem }()
 
-				stats, err := gitpkg.CommitsStats(path, heatmapDays, author)
+				stats, err := gitpkg.CommitsStats(path, heatmapDays, authors)
 				if err != nil || len(stats) == 0 {
 					return
 				}
@@ -112,7 +112,7 @@ func (m model) handleHeatmapKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "r":
 		if !m.heatmapLoading {
 			m.heatmapLoading = true
-			return m, loadHeatmapCmd(m.allRepos, m.author)
+			return m, loadHeatmapCmd(m.allRepos, m.authors)
 		}
 	}
 	return m, nil

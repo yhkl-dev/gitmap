@@ -118,7 +118,9 @@ scan_paths:
 
 auto_fetch: true   # auto fetch all repos on startup
 
-author: alice@example.com   # filter heatmap to this author
+author:                     # filter heatmap to these authors
+  - alice@example.com
+  - bob@example.com
 
 exclude_repos:     # glob patterns to skip specific repos
   - node_modules

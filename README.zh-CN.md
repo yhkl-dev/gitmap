@@ -118,7 +118,9 @@ scan_paths:
 
 auto_fetch: true   # 启动时自动 fetch
 
-author: alice@example.com   # 只统计该作者的提交
+author:                     # 只统计这些作者的提交
+  - alice@example.com
+  - bob@example.com
 
 exclude_repos:     # glob 模式跳过特定仓库
   - node_modules

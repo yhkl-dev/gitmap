@@ -75,15 +75,18 @@ func TestExcludeRepos(t *testing.T) {
 func TestAuthorFromConfig(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.yaml")
-	content := "scan_paths:\n  - /tmp/repos\nauthor: alice@example.com\n"
+	content := "scan_paths:\n  - /tmp/repos\nauthor:\n  - alice@example.com\n  - bob@example.com\n"
 	os.WriteFile(path, []byte(content), 0644)
 
 	cfg, err := Load(path)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if cfg.Author != "alice@example.com" {
-		t.Fatalf("expected author alice@example.com, got %q", cfg.Author)
+	if len(cfg.Author) != 2 {
+		t.Fatalf("expected 2 authors, got %d", len(cfg.Author))
+	}
+	if cfg.Author[0] != "alice@example.com" || cfg.Author[1] != "bob@example.com" {
+		t.Fatalf("unexpected authors: %v", cfg.Author)
 	}
 }
 

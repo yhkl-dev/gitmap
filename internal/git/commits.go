@@ -16,8 +16,8 @@ type DayStats struct {
 
 // CommitsDates runs git log --all on the repo and returns a map of date
 // (YYYY-MM-DD) to commit count, looking back sinceDays from now.
-// If author is non-empty, only commits matching that author are counted.
-func CommitsDates(path string, sinceDays int, author string) (map[string]int, error) {
+// If authors is non-empty, only commits matching those authors are counted.
+func CommitsDates(path string, sinceDays int, authors []string) (map[string]int, error) {
 	since := time.Now().AddDate(0, 0, -sinceDays).Format("2006-01-02")
 
 	args := []string{"-C", path, "log",
@@ -26,8 +26,8 @@ func CommitsDates(path string, sinceDays int, author string) (map[string]int, er
 		"--date=short",
 		"--all",
 	}
-	if author != "" {
-		args = append(args, "--author="+author)
+	for _, a := range authors {
+		args = append(args, "--author="+a)
 	}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
@@ -49,8 +49,8 @@ func CommitsDates(path string, sinceDays int, author string) (map[string]int, er
 
 // CommitsStats runs git log --all --numstat and returns per-day commit
 // counts and lines changed in a single pass.
-// If author is non-empty, only commits matching that author are counted.
-func CommitsStats(path string, sinceDays int, author string) (map[string]DayStats, error) {
+// If authors is non-empty, only commits matching those authors are counted.
+func CommitsStats(path string, sinceDays int, authors []string) (map[string]DayStats, error) {
 	since := time.Now().AddDate(0, 0, -sinceDays).Format("2006-01-02")
 
 	args := []string{"-C", path, "log",
@@ -60,8 +60,8 @@ func CommitsStats(path string, sinceDays int, author string) (map[string]DayStat
 		"--all",
 		"--numstat",
 	}
-	if author != "" {
-		args = append(args, "--author="+author)
+	for _, a := range authors {
+		args = append(args, "--author="+a)
 	}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
