@@ -60,6 +60,7 @@ gmap
 | `c` | Open Claude Code in repo |
 | `d` | Toggle diff preview (--stat) |
 | `r` | Refresh repo list |
+| `h` | Contribution heatmap |
 | `q` | Quit |
 
 ### Detail View
@@ -99,6 +100,12 @@ gmap
 
 ---
 
+## Heatmap
+
+Press `h` from list or detail view to see a contribution heatmap showing commits and lines changed across all repos over the past year. Set `author` in config to filter by email. Data is cached for the day — subsequent visits are instant. Press `r` to force a refresh.
+
+---
+
 ## Config
 
 Create `~/.config/gitmap/config.yaml`:
@@ -110,9 +117,18 @@ scan_paths:
   - /mnt/data/repos
 
 auto_fetch: true   # auto fetch all repos on startup
+
+author:                     # filter heatmap to these authors
+  - alice@example.com
+  - bob@example.com
+
+exclude_repos:     # glob patterns to skip specific repos
+  - node_modules
+  - vendor-*
+  - test-?
 ```
 
-Each path is scanned recursively for `.git` directories. Hidden folders (`.venv`, `.cache`, etc.) and package directories (`node_modules`, `vendor`) are skipped automatically.
+`exclude_repos` supports glob wildcards (`*`, `?`, `[abc]`). Patterns match against repo directory names.
 
 If no config file exists, `~/projects` is scanned by default.
 

@@ -60,6 +60,7 @@ gmap
 | `c` | 在仓库中启动 Claude Code |
 | `d` | 切换 diff 预览 (--stat) |
 | `r` | 刷新仓库列表 |
+| `h` | 贡献热力图 |
 | `q` | 退出 |
 
 ### 详情视图
@@ -99,6 +100,12 @@ gmap
 
 ---
 
+## 热力图
+
+在列表或详情页按 `h` 查看贡献热力图，展示所有仓库过去一年的提交量和代码行变更。配置 `author` 可按邮箱过滤提交。数据按天缓存 — 同一天内再次进入即时显示。按 `r` 强制刷新。
+
+---
+
 ## 配置
 
 创建 `~/.config/gitmap/config.yaml`：
@@ -110,9 +117,18 @@ scan_paths:
   - /mnt/data/repos
 
 auto_fetch: true   # 启动时自动 fetch
+
+author:                     # 只统计这些作者的提交
+  - alice@example.com
+  - bob@example.com
+
+exclude_repos:     # glob 模式跳过特定仓库
+  - node_modules
+  - vendor-*
+  - test-?
 ```
 
-每个路径递归扫描 `.git` 目录。隐藏文件夹（`.venv`、`.cache` 等）和包目录（`node_modules`、`vendor`）自动跳过。
+`exclude_repos` 支持 glob 通配符（`*`、`?`、`[abc]`），匹配仓库目录名。
 
 未配置时默认扫描 `~/projects`。
 

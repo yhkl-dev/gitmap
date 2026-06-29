@@ -78,9 +78,11 @@ type model struct {
 	fetchProgress string
 	pulling       bool
 	pullProgress  string
-	scanPaths  []string
-	autoFetch  bool
-	initDone   bool
+	scanPaths    []string
+	excludeRepos []string
+	authors      []string
+	autoFetch    bool
+	initDone     bool
 	errorCount int // -1 = scan failed, >=0 = per-repo errors
 
 	prefixCount int
@@ -95,6 +97,7 @@ type model struct {
 	heatmapTotal      int
 	heatmapLinesTotal int
 	heatmapRepos      int
+	heatmapLoadedAt   time.Time
 
 	lastActivity time.Time
 
@@ -125,7 +128,7 @@ func idleTickCmd() tea.Cmd {
 // ── bubble tea ──────────────────────────────────────────────────
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(loadReposCmd(m.scanPaths), idleTickCmd())
+	return tea.Batch(loadReposCmd(m.scanPaths, m.excludeRepos), idleTickCmd())
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -158,7 +161,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.fetchProgress = "fetched all"
 		}
 		m.loading = true
-		return m, loadReposCmd(m.scanPaths)
+		return m, loadReposCmd(m.scanPaths, m.excludeRepos)
 
 	case pullDoneMsg:
 		m.pulling = false
@@ -168,7 +171,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.pullProgress = "pulled all"
 		}
 		m.loading = true
-		return m, loadReposCmd(m.scanPaths)
+		return m, loadReposCmd(m.scanPaths, m.excludeRepos)
 
 	case heatmapLoadedMsg:
 		m.heatmapCommits = msg.commits
@@ -177,14 +180,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.heatmapLinesTotal = msg.linesTotal
 		m.heatmapRepos = msg.repos
 		m.heatmapLoading = false
+		m.heatmapLoadedAt = time.Now()
 
 	case idleTickMsg:
 		if m.page == pageList && time.Since(m.lastActivity) > 60*time.Second {
-			m.heatmapLoading = true
-			m.heatmapCommits = nil
-			m.heatmapLines = nil
 			m.page = pageHeatmap
-			return m, tea.Batch(loadHeatmapCmd(m.allRepos), idleTickCmd())
+			if !m.heatmapFresh() {
+				m.heatmapLoading = true
+				m.heatmapCommits = nil
+				m.heatmapLines = nil
+				return m, tea.Batch(loadHeatmapCmd(m.allRepos, m.authors), idleTickCmd())
+			}
 		}
 		return m, idleTickCmd()
 
@@ -304,7 +310,7 @@ func main() {
 	cfg := loadConfig()
 
 	p := tea.NewProgram(
-		model{loading: true, scanPaths: cfg.ScanPaths, autoFetch: cfg.AutoFetch, lastActivity: time.Now()},
+		model{loading: true, scanPaths: cfg.ScanPaths, excludeRepos: cfg.ExcludeRepos, authors: cfg.Author, autoFetch: cfg.AutoFetch, lastActivity: time.Now()},
 		tea.WithAltScreen(),
 	)
 	if _, err := p.Run(); err != nil {

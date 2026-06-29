@@ -44,7 +44,7 @@ type heatmapLoadedMsg struct {
 
 // ── command ──────────────────────────────────────────────────────
 
-func loadHeatmapCmd(repos []gitpkg.RepoStatus) tea.Cmd {
+func loadHeatmapCmd(repos []gitpkg.RepoStatus, authors []string) tea.Cmd {
 	return func() tea.Msg {
 		const maxConcurrent = 8
 		sem := make(chan struct{}, maxConcurrent)
@@ -61,7 +61,7 @@ func loadHeatmapCmd(repos []gitpkg.RepoStatus) tea.Cmd {
 				sem <- struct{}{}
 				defer func() { <-sem }()
 
-				stats, err := gitpkg.CommitsStats(path, heatmapDays)
+				stats, err := gitpkg.CommitsStats(path, heatmapDays, authors)
 				if err != nil || len(stats) == 0 {
 					return
 				}
@@ -97,6 +97,14 @@ func loadHeatmapCmd(repos []gitpkg.RepoStatus) tea.Cmd {
 
 // ── key handling ─────────────────────────────────────────────────
 
+func (m model) heatmapFresh() bool {
+	if len(m.heatmapCommits) == 0 && len(m.heatmapLines) == 0 {
+		return false
+	}
+	now := time.Now()
+	return now.Year() == m.heatmapLoadedAt.Year() && now.YearDay() == m.heatmapLoadedAt.YearDay()
+}
+
 func (m model) handleHeatmapKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc", "q", "h":
@@ -104,7 +112,7 @@ func (m model) handleHeatmapKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "r":
 		if !m.heatmapLoading {
 			m.heatmapLoading = true
-			return m, loadHeatmapCmd(m.allRepos)
+			return m, loadHeatmapCmd(m.allRepos, m.authors)
 		}
 	}
 	return m, nil
