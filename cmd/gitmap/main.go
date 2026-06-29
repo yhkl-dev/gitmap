@@ -80,6 +80,7 @@ type model struct {
 	pullProgress  string
 	scanPaths    []string
 	excludeRepos []string
+	author       string
 	autoFetch    bool
 	initDone     bool
 	errorCount int // -1 = scan failed, >=0 = per-repo errors
@@ -188,7 +189,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.heatmapLoading = true
 				m.heatmapCommits = nil
 				m.heatmapLines = nil
-				return m, tea.Batch(loadHeatmapCmd(m.allRepos), idleTickCmd())
+				return m, tea.Batch(loadHeatmapCmd(m.allRepos, m.author), idleTickCmd())
 			}
 		}
 		return m, idleTickCmd()
@@ -309,7 +310,7 @@ func main() {
 	cfg := loadConfig()
 
 	p := tea.NewProgram(
-		model{loading: true, scanPaths: cfg.ScanPaths, excludeRepos: cfg.ExcludeRepos, autoFetch: cfg.AutoFetch, lastActivity: time.Now()},
+		model{loading: true, scanPaths: cfg.ScanPaths, excludeRepos: cfg.ExcludeRepos, author: cfg.Author, autoFetch: cfg.AutoFetch, lastActivity: time.Now()},
 		tea.WithAltScreen(),
 	)
 	if _, err := p.Run(); err != nil {

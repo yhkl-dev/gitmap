@@ -102,7 +102,7 @@ gmap
 
 ## Heatmap
 
-Press `h` from list or detail view to see a contribution heatmap showing commits and lines changed across all repos over the past year. Data is cached for the day — subsequent visits are instant. Press `r` to force a refresh.
+Press `h` from list or detail view to see a contribution heatmap showing commits and lines changed across all repos over the past year. Set `author` in config to filter by email. Data is cached for the day — subsequent visits are instant. Press `r` to force a refresh.
 
 ---
 
@@ -117,6 +117,8 @@ scan_paths:
   - /mnt/data/repos
 
 auto_fetch: true   # auto fetch all repos on startup
+
+author: alice@example.com   # filter heatmap to this author
 
 exclude_repos:     # glob patterns to skip specific repos
   - node_modules

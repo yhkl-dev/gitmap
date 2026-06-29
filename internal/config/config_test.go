@@ -72,6 +72,21 @@ func TestExcludeRepos(t *testing.T) {
 	}
 }
 
+func TestAuthorFromConfig(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	content := "scan_paths:\n  - /tmp/repos\nauthor: alice@example.com\n"
+	os.WriteFile(path, []byte(content), 0644)
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Author != "alice@example.com" {
+		t.Fatalf("expected author alice@example.com, got %q", cfg.Author)
+	}
+}
+
 func TestIsExcluded(t *testing.T) {
 	cfg := &Config{
 		ExcludeRepos: []string{"node_modules", "vendor-*", "test-?"},

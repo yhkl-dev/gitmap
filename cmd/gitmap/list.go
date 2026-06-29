@@ -299,7 +299,7 @@ func (m model) handleListKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.heatmapLoading = true
 			m.heatmapCommits = nil
 			m.heatmapLines = nil
-			return m, loadHeatmapCmd(m.allRepos)
+			return m, loadHeatmapCmd(m.allRepos, m.author)
 		}
 		return m, nil
 

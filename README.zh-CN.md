@@ -102,7 +102,7 @@ gmap
 
 ## 热力图
 
-在列表或详情页按 `h` 查看贡献热力图，展示所有仓库过去一年的提交量和代码行变更。数据按天缓存 — 同一天内再次进入即时显示。按 `r` 强制刷新。
+在列表或详情页按 `h` 查看贡献热力图，展示所有仓库过去一年的提交量和代码行变更。配置 `author` 可按邮箱过滤提交。数据按天缓存 — 同一天内再次进入即时显示。按 `r` 强制刷新。
 
 ---
 
@@ -117,6 +117,8 @@ scan_paths:
   - /mnt/data/repos
 
 auto_fetch: true   # 启动时自动 fetch
+
+author: alice@example.com   # 只统计该作者的提交
 
 exclude_repos:     # glob 模式跳过特定仓库
   - node_modules
