@@ -70,7 +70,7 @@ func loadReposCmd(scanPaths []string, excludeRepos []string) tea.Cmd {
 		if len(excludeRepos) > 0 {
 			var filtered []scanner.Repo
 			for _, r := range repos {
-				if !config.MatchesAny(r.Name, excludeRepos) {
+				if !config.MatchesAny(r.Name, excludeRepos) && !config.MatchesAny(r.Path, excludeRepos) {
 					filtered = append(filtered, r)
 				}
 			}
